@@ -64,6 +64,7 @@ int main(int argc, char **argv)
     int S = 1 << s;
     int E = 1 << e;
     printf("%lld m , %d s , %d e , %d b , %s i , %s r\n ", m, s, e, b, filename, replacement);
+
     struct cacheline **cache = malloc(S * sizeof(struct cacheline *));
 
     for (int i = 0; i < S; i++)
@@ -78,6 +79,15 @@ int main(int argc, char **argv)
     }
     printf("S = %d , E = %d", S, E);
 
+    FILE * file = fopen(filename, "r");
+    if (file != NULL){
+        long long address;
+        while (fscanf(file, "%llx", &address) == 1){
+            printf("%llx\n", address);
+    }
+    }else{
+        printf("-----FILE DOSENT EXIST------")
+    }
     return 0;
 }
 
