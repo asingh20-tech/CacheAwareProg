@@ -60,11 +60,14 @@ int main(int argc, char **argv)
         case 'r':
             strcpy(replacement, optarg);
             break;
+        default:
+            printf("Missing or invalid argument\n");
+            exit(1);
         }
     }
     int S = 1 << s;
     int E = 1 << e;
-    printf("%lld m , %d s , %d e , %d b , %s i , %s r\n ", m, s, e, b, filename, replacement);
+    // printf("%lld m , %d s , %d e , %d b , %s i , %s r\n ", m, s, e, b, filename, replacement);
 
     struct cacheline **cache = malloc(S * sizeof(struct cacheline *));
 
@@ -78,7 +81,7 @@ int main(int argc, char **argv)
             cache[i][j].lru = 0;
         }
     }
-    printf("S = %d , E = %d", S, E);
+    // printf("S = %d , E = %d", S, E);
 
     FILE *file = fopen(filename, "r");
     if (file != NULL)
@@ -86,9 +89,9 @@ int main(int argc, char **argv)
         long long address;
         while (fscanf(file, "%llx", &address) == 1)
         {
-            printf("%llx\n", address);
+            printf("%llX ", address);
             int set_index = (address >> b) & ((1 << s) - 1);
-            int tag = address >> (b + s);
+            long long tag = address >> (b + s);
             time++;
             int hit = 0;
             for (int j = 0; j < E; j++)
@@ -100,22 +103,24 @@ int main(int argc, char **argv)
 
                     cache[set_index][j].lru = time;
 
-                    printf("HIT\n");
+                    printf("\033[1;32mH\033[0m\n");
+                    
                     break;
                 }
             }
             if (hit == 0)
             {
                 misses++;
-                int empty;
-                printf("MISS\n");
+                int empty = 0;
+                printf("\x1B[31mM\x1B[0m\n");
+                
                 for (int j = 0; j < E; j++)
                 {
                     if (cache[set_index][j].valid == 0)
                     {
                         cache[set_index][j].valid = 1;
                         cache[set_index][j].tag = tag;
-                        cache[set_index][j].lru = 1;
+                        cache[set_index][j].lru = time;
                         empty = 1;
                         break;
                     }
@@ -133,17 +138,31 @@ int main(int argc, char **argv)
                             minindex = j;
                         }
                     }
-
                     cache[set_index][minindex].tag = tag;
                     cache[set_index][minindex].lru = time;
                 }
             }
         }
+        fclose(file);
     }
     else
     {
         printf("-----FILE DOSENT EXIST------");
     }
+    int total = hits + misses;
+    double missRate = (double)misses / total;
+    int missRateInt = (misses * 100) / total;
+
+    double x = HIT_TIME + (missRate * MISS_PENALTY);
+    int runTime = total * x;
+
+    printResult(hits, misses, missRateInt, runTime);
+    for (int i = 0; i < S; i++)
+    {
+        free(cache[i]);
+    }
+    free(cache);
+
     return 0;
 }
 
