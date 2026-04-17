@@ -79,14 +79,49 @@ int main(int argc, char **argv)
     }
     printf("S = %d , E = %d", S, E);
 
-    FILE * file = fopen(filename, "r");
-    if (file != NULL){
+    FILE *file = fopen(filename, "r");
+    if (file != NULL)
+    {
         long long address;
-        while (fscanf(file, "%llx", &address) == 1){
+        while (fscanf(file, "%llx", &address) == 1)
+        {
             printf("%llx\n", address);
+            int set_index = (address >> b) & ((1 << s) - 1);
+            int tag = address >> (b + s);
+            int hit = 0;
+            for (int j = 0; j < E; j++)
+            {
+                if (cache[set_index][j].valid == 1 && cache[set_index][j].tag == tag)
+                {
+                    hit = 1;
+                    hits++;
+
+                    cache[set_index][j].lru++;
+
+                    printf("HIT\n");
+                    break;
+                }
+            }
+            if (hit == 0)
+            {
+                misses++;
+                int empty;
+                printf("MISS\n");
+                for (int j =0 ; j < E ; j ++){
+                    if (cache[set_index][j].valid == 0 ){
+                        cache[set_index][j].valid = 1;
+                        cache[set_index][j].tag = tag;
+                        cache[set_index][j].lru = 1;
+                        empty =1;
+                        break;
+                    }
+                }
+            } 
+        }
     }
-    }else{
-        printf("-----FILE DOSENT EXIST------")
+    else
+    {
+        printf("-----FILE DOSENT EXIST------");
     }
     return 0;
 }
